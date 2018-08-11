@@ -4,10 +4,10 @@
 #include <iostream>
 #include <thread>
 #include <vector>
+#include "json.hpp"
 #include "Eigen-3.3/Eigen/Core"
 #include "Eigen-3.3/Eigen/QR"
 #include "MPC.h"
-#include "json.hpp"
 
 // for convenience
 using json = nlohmann::json;
@@ -91,6 +91,8 @@ int main() {
           double py = j[1]["y"];
           double psi = j[1]["psi"];
           double v = j[1]["speed"];
+		  double delta = j[1]["steering_angle"];
+		  double a = j[1]["throttle"];
 
           /*
           * TODO: Calculate steering angle and throttle using MPC.
@@ -100,6 +102,57 @@ int main() {
           */
           double steer_value;
           double throttle_value;
+
+		  Eigen::VectorXd xvals(ptsx.size());
+		  Eigen::VectorXd yvals(ptsx.size());
+
+		  for (int i = 0; i < ptsx.size(); i++)
+		  {
+			  xvals[i] = ptsx[i];
+			  yvals[i] = ptsy[i];
+		  }
+		  
+		  // Convert map space to car space 
+		  for (int i = 0; i < ptsx.size(); i++)
+		  {
+			  xvals[i] = (ptsx[i] - px) * cos(psi) + (ptsy[i] - py) * sin(psi);
+			  yvals[i] = (ptsy[i] - py) * cos(psi) - (ptsx[i] - px) * sin(psi);
+		  }
+		  
+		  auto coeffs = polyfit(xvals, yvals, 3);
+
+		  // Initialize the state at the beginning of every loop.
+		  double x0 = 0;
+		  double y0 = 0;
+		  double psi0 = 0;
+		  double v0 = v / 0.45;
+		  double cte = polyeval(coeffs, x0) - y0;
+		  double epsi = psi0 - atan(coeffs[1] + 2 * coeffs[2] * x0 + 3 * coeffs[3] * pow(x0, 2));
+		  //cout << "the angle = " << atan(coeffs[1] + 2 * coeffs[2] * 0 + 3 * coeffs[3] * pow(0, 2)) << endl;
+		  
+		  // Take the latency into account
+		  double latency = 0.1;
+		  double Lf = 2.67;
+		  double x1 = x0 + v0 * cos(psi0) * latency;
+		  double y1 = y0 + v0 * sin(psi0) * latency;
+		  double psi1 = psi0 - v0 * delta * latency / Lf;
+		  double v1 = v0 + a * latency;
+		  double cte1 = polyeval(coeffs, x1) - y1;
+		  double epsi1 = psi1 - atan(coeffs[1] + 2 * coeffs[2] * x1 + 3 * coeffs[3] * pow(x1, 2));
+		  
+		  Eigen::VectorXd state(6);
+		  state << x1, y1, psi1, v1, cte1, epsi1; // In car space the initial steering angle is 0
+
+		  vector<double> actuator;
+		  actuator = mpc.Solve(state, coeffs);
+		  
+		  steer_value = actuator[0] / deg2rad(25);
+		  throttle_value = actuator[1];
+
+		  //for (int i = 2; i < actuator.size(); i++)
+		  //{
+			  //cout << "the result = " << actuator[i] << endl;
+		  //}
 
           json msgJson;
           // NOTE: Remember to divide by deg2rad(25) before you send the steering value back.
@@ -111,6 +164,13 @@ int main() {
           vector<double> mpc_x_vals;
           vector<double> mpc_y_vals;
 
+		  for (int i = 2; i < actuator.size(); i += 2)
+		  {
+			  mpc_x_vals.push_back(actuator[i]);
+			  mpc_y_vals.push_back(actuator[i + 1]);
+		  }
+
+
           //.. add (x,y) points to list here, points are in reference to the vehicle's coordinate system
           // the points in the simulator are connected by a Green line
 
@@ -120,6 +180,12 @@ int main() {
           //Display the waypoints/reference line
           vector<double> next_x_vals;
           vector<double> next_y_vals;
+
+		  for (int i = 0; i < xvals.size(); i++)
+		  {
+			  next_x_vals.push_back(xvals[i]);
+			  next_y_vals.push_back(yvals[i]);
+		  }
 
           //.. add (x,y) points to list here, points are in reference to the vehicle's coordinate system
           // the points in the simulator are connected by a Yellow line
