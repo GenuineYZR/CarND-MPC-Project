@@ -53,7 +53,7 @@ class FG_eval {
 	  {
 		  fg[0] += 2000 * CppAD::pow(vars[cte_start + i], 2);
 		  fg[0] += 2000 * CppAD::pow(vars[epsi_start + i], 2);
-		  fg[0] += 1 * CppAD::pow(vars[v_start + i] - 200, 2); // Avoid the car from stopping moving when aligned with the center line.
+		  fg[0] += 2 * CppAD::pow(vars[v_start + i] - 120, 2); // Avoid the car from stopping moving when aligned with the center line.
 	  }
 
 	  // Minimize the value gap between sequential actuations.
@@ -80,14 +80,14 @@ class FG_eval {
 	  for (int i = 1; i < N; i++)
 	  {
 		  AD<double> x1 = vars[x_start + i];
-		  AD<double> y1 = vars[y_start + i];
+		  AD<double> y_1 = vars[y_start + i];
 		  AD<double> psi1 = vars[psi_start + i];
 		  AD<double> v1 = vars[v_start + i];
 		  AD<double> cte1 = vars[cte_start + i];
 		  AD<double> epsi1 = vars[epsi_start + i];
 
 		  AD<double> x0 = vars[x_start + i - 1];
-		  AD<double> y0 = vars[y_start + i -1];
+		  AD<double> y_0 = vars[y_start + i -1];
 		  AD<double> psi0 = vars[psi_start + i - 1];
 		  AD<double> v0 = vars[v_start + i - 1];
 		  AD<double> cte0 = vars[cte_start + i - 1];
@@ -101,7 +101,7 @@ class FG_eval {
 		  //AD<double> psides0 = CppAD::atan(coeffs[1] + 2 * coeffs[2] * x0 + 3 * coeffs[3] * CppAD::pow(x0, 2));
 		  
 		  fg[x_start + 1 + i] = x1 - (x0 + v0 * CppAD::cos(psi0) * dt);
-		  fg[y_start + 1 + i] = y1 - (y0 + v0 * CppAD::sin(psi0) * dt);
+		  fg[y_start + 1 + i] = y_1 - (y_0 + v0 * CppAD::sin(psi0) * dt);
 		  fg[psi_start + 1 + i] = psi1 - (psi0 - v0 * delta0 * dt / Lf) ;
 		  fg[v_start + 1 + i] = v1 - (v0 + a0 * dt);
 		  //fg[cte_start + 1 + i] = cte1 - (f0 - y0 + v0 * CppAD::sin(epsi0) * dt);
@@ -110,7 +110,7 @@ class FG_eval {
 		  AD<double> f1 = coeffs[0] + coeffs[1] * x1 + coeffs[2] * CppAD::pow(x1, 2) + coeffs[3] * CppAD::pow(x1, 3);
 		  AD<double> psi_des1 = CppAD::atan(coeffs[1] + 2 * coeffs[2] * x1 + 3 * coeffs[3] * CppAD::pow(x1, 2));
 
-		  fg[cte_start + 1 + i] = cte1 - (f1 - y1);
+		  fg[cte_start + 1 + i] = cte1 - (f1 - y_1);
 		  fg[epsi_start + 1 + i] = epsi1 - (psi1 - psi_des1);
 	  }
 
@@ -216,7 +216,7 @@ vector<double> MPC::Solve(Eigen::VectorXd state, Eigen::VectorXd coeffs) {
   options += "Sparse  true        reverse\n";
   // NOTE: Currently the solver has a maximum time limit of 0.5 seconds.
   // Change this as you see fit.
-  options += "Numeric max_cpu_time          2.0\n";
+  options += "Numeric max_cpu_time          1.5\n";
 
   // place to return solution
   CppAD::ipopt::solve_result<Dvector> solution;
