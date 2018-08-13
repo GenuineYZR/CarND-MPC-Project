@@ -125,7 +125,7 @@ int main() {
 		  double x0 = 0;
 		  double y0 = 0;
 		  double psi0 = 0;
-		  double v0 = v / 0.45;
+		  double v0 = v * 0.444; // Turn the unit from mph to m/s.
 		  double cte = polyeval(coeffs, x0) - y0;
 		  double epsi = psi0 - atan(coeffs[1] + 2 * coeffs[2] * x0 + 3 * coeffs[3] * pow(x0, 2));
 		  //cout << "the angle = " << atan(coeffs[1] + 2 * coeffs[2] * 0 + 3 * coeffs[3] * pow(0, 2)) << endl;
