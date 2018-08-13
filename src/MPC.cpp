@@ -97,21 +97,21 @@ class FG_eval {
 		  AD<double> delta0 = vars[delta_start + i - 1];
 		  AD<double> a0 = vars[a_start + i - 1];
 
-		  //AD<double> f0 = coeffs[0] + coeffs[1] * x0 + coeffs[2] * CppAD::pow(x0, 2) + coeffs[3] * CppAD::pow(x0, 3);
-		  //AD<double> psides0 = CppAD::atan(coeffs[1] + 2 * coeffs[2] * x0 + 3 * coeffs[3] * CppAD::pow(x0, 2));
+		  AD<double> f0 = coeffs[0] + coeffs[1] * x0 + coeffs[2] * CppAD::pow(x0, 2) + coeffs[3] * CppAD::pow(x0, 3);
+		  AD<double> psides0 = CppAD::atan(coeffs[1] + 2 * coeffs[2] * x0 + 3 * coeffs[3] * CppAD::pow(x0, 2));
 		  
 		  fg[x_start + 1 + i] = x1 - (x0 + v0 * CppAD::cos(psi0) * dt);
 		  fg[y_start + 1 + i] = y_1 - (y_0 + v0 * CppAD::sin(psi0) * dt);
 		  fg[psi_start + 1 + i] = psi1 - (psi0 - v0 * delta0 * dt / Lf) ;
 		  fg[v_start + 1 + i] = v1 - (v0 + a0 * dt);
-		  //fg[cte_start + 1 + i] = cte1 - (f0 - y0 + v0 * CppAD::sin(epsi0) * dt);
-		  //fg[epsi_start + 1 + i] = epsi1 - (psi0 - psides0 - v0 * delta0 * dt/ Lf);
+		  fg[cte_start + 1 + i] = cte1 - (f0 - y_0 + v0 * CppAD::sin(epsi0) * dt);
+		  fg[epsi_start + 1 + i] = epsi1 - (psi0 - psides0 - v0 * delta0 * dt/ Lf);
 
-		  AD<double> f1 = coeffs[0] + coeffs[1] * x1 + coeffs[2] * CppAD::pow(x1, 2) + coeffs[3] * CppAD::pow(x1, 3);
-		  AD<double> psi_des1 = CppAD::atan(coeffs[1] + 2 * coeffs[2] * x1 + 3 * coeffs[3] * CppAD::pow(x1, 2));
+		  //AD<double> f1 = coeffs[0] + coeffs[1] * x1 + coeffs[2] * CppAD::pow(x1, 2) + coeffs[3] * CppAD::pow(x1, 3);
+		  //AD<double> psi_des1 = CppAD::atan(coeffs[1] + 2 * coeffs[2] * x1 + 3 * coeffs[3] * CppAD::pow(x1, 2));
 
-		  fg[cte_start + 1 + i] = cte1 - (f1 - y_1);
-		  fg[epsi_start + 1 + i] = epsi1 - (psi1 - psi_des1);
+		  //fg[cte_start + 1 + i] = cte1 - (f1 - y_1);
+		  //fg[epsi_start + 1 + i] = epsi1 - (psi1 - psi_des1);
 	  }
 
 
